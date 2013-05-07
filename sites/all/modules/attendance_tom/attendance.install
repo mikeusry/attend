@@ -1,0 +1,126 @@
+<?php
+
+/**
+ * @file
+ * Schema and installation hooks for attendance module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function attendance_schema() {
+	//setup our entity's table
+
+  $schema = array();
+  $schema['session_registration'] = array(
+    'description' => 'The base table for attendance module.',
+    'fields' => array(
+      'regsession_id' => array(
+        'description' => 'The primary identifier for a session registration.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'registration_id' => array(
+        'description' => 'reg id',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'entity_id' => array(
+        'description' => 'The id of the entity this registration is associated with.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'entity_type' => array(
+        'description' => 'The entity type of the entity this registration is associated with.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+    ),
+    'indexes' => array(
+      'ix_regsession_regid' => array('registration_id'),
+    ),
+    'foreign keys' => array(
+      'registration_id' => array(
+        'table' => 'registration',
+        'columns' => array('registration_id' => 'registration_id'),
+      ),
+    ),
+    'primary key' => array('regsession_id'),
+  );
+
+  // Create cache bins for Entity-cache module.
+  $cache_schema = drupal_get_schema_unprocessed('system', 'cache');
+  $types = array(
+    'session_registration',
+  );
+
+  foreach ($types as $type) {
+    $schema["cache_entity_$type"] = $cache_schema;
+    $schema["cache_entity_$type"]['description'] = "Cache table used to store $type entity records.";
+  }
+
+  return $schema;
+}
+
+function attendance_get_registrations() {
+  return entity_load('registration');
+}
+
+function attendance_get_class($nid) {
+  return node_load($nid);
+}
+
+function attendance_get_sessions($parent_nid) {
+  $query = new EntityFieldQuery();
+  $entities = $query->entityCondition('entity_type', 'node')
+    ->entityCondition('bundle', 'session')
+    ->fieldCondition('field_parent_class_event', 'target_id', $parent_nid, '=')
+    ->execute();
+  return $entities['node'];
+}
+
+function attendance_get_regsession($reg_id, $ses_id) {
+  $query = new EntityFieldQuery();
+  $entities = $query->entityCondition('entity_type', 'session_registration')
+    ->propertyCondition('registration_id', $reg_id, '=')
+    ->propertyCondition('entity_id', $ses_id, '=')
+    ->execute();
+  return $entities;
+}
+
+/**
+ * Implements hook_install().
+ */
+function attendance_install() {
+	//during install, setup necessary objects for existing registrations
+
+  //load existing registrations
+  $regs = entity_load('registration');
+
+  foreach ($regs as $reg) {
+    //each registration, find the class/sessions
+    //$class = attendance_get_class($reg->entity_id);
+
+    $sessions = attendance_get_sessions($reg->entity_id);
+    //print_r($sessions);
+
+    foreach ($sessions as $session) {
+      //each session, check for session_registration entity, if not, create
+      $regses = attendance_get_regsession($reg->registration_id, $session->nid);
+
+			if (count($regses) == 0) {
+				//insert a new one (pair the registration with the session)
+				db_insert('session_registration')->fields(array(
+					'registration_id' => $reg->registration_id,
+					'entity_id' => $session->nid,
+					'entity_type' => 'node',
+				))->execute();
+      }
+    }
+  }
+}

@@ -1,0 +1,7 @@
+name = Attendance (Tom)
+description = Attendance tracking for sessions/classes (based on flag)
+dependencies[] = flag
+dependencies[] = registration
+core = 7.x
+
+files[] = attendance.module

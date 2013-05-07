@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Prolifik Authorship feature.
+ */
+
+include_once 'prolifik_authorship.features.inc';

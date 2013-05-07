@@ -1,0 +1,99 @@
+<?php
+
+/*
+  how does it work?
+
+  - custom entity that is the cross product of registrations and sessions
+  - add a flag to that custom entity for attendance
+  - customize the entity for rules and views support
+  - setup views for listing and modifying attendance flag
+  - setup a rule to add our custom object when a new registration occurs
+
+  data model:
+  registration has one class/event
+  class has many sessions
+  session has many session_registration (one per registration)
+  registration has many session_registrations (one per session)
+*/
+
+/**
+ * Implements hook_entity_info().
+ */
+function attendance_entity_info() {
+	//setup our entity
+  $entities = array();
+  $entities['session_registration'] =
+    array(
+      'label' => t('Session Registration'),
+      'base table' => 'session_registration',
+      'entity keys' => array(
+        'id' => 'regsession_id',
+      ),
+      'controller class' => 'EntityAPIController',
+      'views controller class' => 'EntityDefaultViewsController',
+    );
+
+  return $entities;
+}
+
+/**
+ * Implements hook_views_data_alter().
+ */
+function attendance_views_data_alter(&$data) {
+	// expose the session_registration from the registration object
+
+	//print_r($data['session_registration']);die();
+	$data['registration']['session_registration'] = array(
+		'title' => t('Session Registration'),
+		'help' => t('Relate a registration to the session registration (for attendance)'),
+		'relationship' => array(
+			'base' => 'session_registration',
+			'base field' => 'registration_id',
+			'relationship field' => 'registration_id',
+			'handler' => 'views_handler_relationship',
+			'label' => t('session_registration'),
+		),
+	);
+}
+
+/**
+ * Implements hook_entity_property_info_alter().
+ */
+function attendance_entity_property_info_alter(&$info) {
+	// allow these properties to be written in a "rule"
+
+	$info['session_registration']['properties']['registration_id']['setter callback'] = 'entity_property_verbatim_set';
+	$info['session_registration']['properties']['entity_id']['setter callback'] = 'entity_property_verbatim_set';
+	$info['session_registration']['properties']['entity_type']['setter callback'] = 'entity_property_verbatim_set';
+}
+
+/**
+ * Implements hook_menu()
+ */
+/*function attendance_menu() {
+  $menu = array();
+
+  //debug stuff
+  $menu['attendance/entities'] = array(
+    'title' => 'Entities',
+    'description' => '',
+    'page callback' => 'attendance_page_entities',
+    'access arguments' => array('access content'),
+  );
+  $menu['attendance/srs'] = array(
+    'title' => 'Entities',
+    'description' => '',
+    'page callback' => 'attendance_page_srs',
+    'access arguments' => array('access content'),
+  );
+  return $menu;
+}
+
+function attendance_page_entities() {
+	print_r(entity_get_info());
+}
+
+function attendance_page_srs() {
+	$entities = entity_load('session_registration');
+	print_r($entities);
+}*/

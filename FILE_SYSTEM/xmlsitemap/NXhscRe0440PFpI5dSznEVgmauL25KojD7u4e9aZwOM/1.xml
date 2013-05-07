@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/sitemap.xsl"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<url><loc>http://default/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>
+<url><loc>http://default/contact-us</loc><lastmod>2012-07-26T16:51Z</lastmod><changefreq>yearly</changefreq></url>
+<url><loc>http://default/thank-you</loc><lastmod>2012-07-26T16:54Z</lastmod><changefreq>yearly</changefreq></url>
+<url><loc>http://default/about-us</loc><lastmod>2013-03-27T10:49Z</lastmod><changefreq>always</changefreq></url>
+</urlset>
